@@ -169,15 +169,9 @@ export default function Pitch({
 
   return (
     <div className="pitch-wrap" id="saha-pitch-card">
-      <div className="pitch-labels">
-        <span className="pitch-label pitch-label--away">
-          {away.logo && <img src={away.logo} alt="" className="pitch-logo" />}
-          {away.name}
-        </span>
-        <span className="pitch-label pitch-label--home">
-          {home.logo && <img src={home.logo} alt="" className="pitch-logo" />}
-          {home.name}
-        </span>
+      <div className="pitch-banner pitch-banner--away">
+        {away.logo && <img src={away.logo} alt="" className="pitch-logo" />}
+        <span>{away.name}</span>
       </div>
       <div
         className="pitch"
@@ -227,6 +221,10 @@ export default function Pitch({
           onMove={onMove}
           onSelectPlayer={onSelectPlayer}
         />
+      </div>
+      <div className="pitch-banner pitch-banner--home">
+        {home.logo && <img src={home.logo} alt="" className="pitch-logo" />}
+        <span>{home.name}</span>
       </div>
     </div>
   )
