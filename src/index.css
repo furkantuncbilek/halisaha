@@ -219,6 +219,42 @@ button {
   font-weight: 600;
 }
 
+.install-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: linear-gradient(135deg, rgba(184, 245, 58, 0.12), rgba(10, 28, 18, 0.9));
+  animation: rise 0.65s ease both;
+}
+
+.install-banner strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.install-banner p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--chalk-dim);
+  line-height: 1.4;
+}
+
+.install-ios {
+  color: var(--lime) !important;
+}
+
+.install-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
 .share-banner {
   justify-content: space-between;
   padding: 0.85rem 1rem;

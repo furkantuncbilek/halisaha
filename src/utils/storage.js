@@ -1,8 +1,12 @@
 import LZString from 'lz-string'
 import {
   DEFAULT_FORMATIONATION,
+  FORMATIONS,
   createEmptyLineup,
   createTeam,
+  getSlotPlayerId,
+  mapPitchPosition,
+  normalizeSlot,
   realignLineup,
 } from './formations'
 
@@ -17,34 +21,65 @@ export function defaultState() {
   }
 }
 
-function fixTeam(team, side, fallbackName) {
+function normalizeTeam(team, side, fallbackName, { realign = false } = {}) {
   const formation = team?.formation || DEFAULT_FORMATIONATION
   const name =
     !team?.name || team.name === 'Ev Sahibi' || team.name === 'Ekibimiz'
       ? fallbackName
       : team.name
+
+  let lineup = team?.lineup || createEmptyLineup(formation)
+  if (realign) {
+    lineup = realignLineup(lineup, formation, side)
+  } else {
+    // Eski string slotları {playerId,x,y} formatına çevir; özel konumları koru
+    const formationDef = FORMATIONS[formation] || FORMATIONS[DEFAULT_FORMATIONATION]
+    const next = createEmptyLineup(formation)
+    formationDef.positions.forEach((pos) => {
+      const entry = normalizeSlot(lineup?.[pos.id], pos, side)
+      if (!entry?.playerId) return
+      next[pos.id] = entry
+    })
+    // Orphan slots from older formations: keep if still have player
+    Object.keys(lineup || {}).forEach((slotId) => {
+      if (next[slotId] !== undefined) return
+      const pid = getSlotPlayerId(lineup[slotId])
+      if (!pid) return
+      const mapped = mapPitchPosition({ x: 50, y: 50, id: slotId }, side)
+      const raw = lineup[slotId]
+      next[slotId] =
+        typeof raw === 'object' && raw
+          ? { playerId: pid, x: raw.x ?? mapped.x, y: raw.y ?? mapped.y }
+          : { playerId: pid, x: mapped.x, y: mapped.y }
+    })
+    lineup = next
+  }
+
   return {
     logo: team?.logo ?? null,
     ...team,
     name,
     formation,
-    players: team?.players || [],
-    lineup: realignLineup(team?.lineup, formation, side),
+    players: (team?.players || []).map((p) => ({
+      ...p,
+      photo: p.photo ?? null,
+    })),
+    lineup,
   }
 }
 
-function migrateLegacy(legacy) {
+function migrateLegacy(legacy, { realign = true } = {}) {
   if (!legacy) return null
   if (legacy.home && legacy.away) {
     return {
-      home: fixTeam(legacy.home, 'home', 'Ev'),
-      away: fixTeam(legacy.away, 'away', 'Deplasman'),
+      home: normalizeTeam(legacy.home, 'home', 'Ev', { realign }),
+      away: normalizeTeam(legacy.away, 'away', 'Deplasman', { realign }),
       matches: legacy.matches || [],
     }
   }
   if (!legacy.players && !legacy.teamName) return null
   return {
-    home: fixTeam(
+    home: normalizeTeam(
       {
         name: legacy.teamName || 'Ev',
         formation: legacy.formation || DEFAULT_FORMATIONATION,
@@ -52,7 +87,8 @@ function migrateLegacy(legacy) {
         lineup: legacy.lineup || createEmptyLineup(legacy.formation || DEFAULT_FORMATIONATION),
       },
       'home',
-      'Ev'
+      'Ev',
+      { realign }
     ),
     away: createTeam('Deplasman', legacy.formation || DEFAULT_FORMATIONATION),
     matches: legacy.matches || [],
@@ -63,12 +99,20 @@ export function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
+      // Aynı sürüm: konumları koru
       const parsed = JSON.parse(raw)
-      return migrateLegacy(parsed) || parsed
+      return migrateLegacy(parsed, { realign: false }) || parsed
     }
     for (const key of LEGACY_KEYS) {
       const legacy = localStorage.getItem(key)
-      if (legacy) return migrateLegacy(JSON.parse(legacy))
+      if (legacy) {
+        const migrated = migrateLegacy(JSON.parse(legacy), { realign: true })
+        if (migrated) {
+          // Yeni anahtara taşı
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+        }
+        return migrated
+      }
     }
     return null
   } catch {
@@ -79,8 +123,9 @@ export function loadState() {
 export function saveState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
   } catch {
-    /* quota */
+    return false
   }
 }
 
@@ -97,7 +142,7 @@ export function decodeShare(code) {
   try {
     const json = LZString.decompressFromEncodedURIComponent(code)
     if (!json) return null
-    return migrateLegacy(JSON.parse(json))
+    return migrateLegacy(JSON.parse(json), { realign: false })
   } catch {
     return null
   }

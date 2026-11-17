@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import InstallPWA from './components/InstallPWA'
 import MatchRatings from './components/MatchRatings'
 import Pitch from './components/Pitch'
 import PlayerPanel from './components/PlayerPanel'
@@ -62,6 +63,8 @@ export default function App() {
           </span>
         </div>
       </header>
+
+      <InstallPWA />
 
       <ShareBar
         shareUrl={shareUrl}
@@ -166,7 +169,7 @@ export default function App() {
 
       <footer className="footer">
         <span>SAHA</span>
-        <span>İki takımlı halı saha paneli</span>
+        <span>Veriler bu cihazda saklanır · Ana ekrana eklenebilir</span>
       </footer>
     </div>
   )
