@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -10,7 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import { formatRating, ratingColor } from '../utils/formations'
-import { getPlayerAvg, getPlayerForm } from '../utils/storage'
+import { getPlayerAvg, getPlayerForm, getTeamAvg } from '../utils/storage'
 
 const tipStyle = {
   background: '#0d1f14',
@@ -20,8 +21,11 @@ const tipStyle = {
   fontSize: 12,
 }
 
-export default function Stats({ players, matches }) {
-  const averages = players
+const HOME_COLOR = '#b8f53a'
+const AWAY_COLOR = '#5ec8ff'
+
+function teamAverages(players, matches) {
+  return players
     .map((p) => ({
       id: p.id,
       name: p.name.length > 10 ? `${p.name.slice(0, 9)}…` : p.name,
@@ -30,8 +34,20 @@ export default function Stats({ players, matches }) {
     }))
     .filter((x) => x.avg != null)
     .sort((a, b) => b.avg - a.avg)
+}
 
-  const topPlayer = averages[0]
+export default function Stats({ home, away, matches }) {
+  const homeAvg = teamAverages(home.players, matches)
+  const awayAvg = teamAverages(away.players, matches)
+  const homeTeam = getTeamAvg(home.players, matches)
+  const awayTeam = getTeamAvg(away.players, matches)
+
+  const combined = [
+    ...homeAvg.map((p) => ({ ...p, team: home.name, fill: HOME_COLOR })),
+    ...awayAvg.map((p) => ({ ...p, team: away.name, fill: AWAY_COLOR })),
+  ].sort((a, b) => b.avg - a.avg)
+
+  const topPlayer = combined[0]
   const formSeries = topPlayer
     ? getPlayerForm(topPlayer.id, matches, 8).map((x) => ({
         name: x.match.length > 12 ? `${x.match.slice(0, 11)}…` : x.match,
@@ -39,19 +55,19 @@ export default function Stats({ players, matches }) {
       }))
     : []
 
-  const teamAvg =
-    averages.length > 0
-      ? averages.reduce((s, x) => s + x.avg, 0) / averages.length
-      : null
+  const compareData = [
+    { name: home.name, ort: homeTeam != null ? Number(homeTeam.toFixed(2)) : 0, fill: HOME_COLOR },
+    { name: away.name, ort: awayTeam != null ? Number(awayTeam.toFixed(2)) : 0, fill: AWAY_COLOR },
+  ]
 
-  if (matches.length === 0 || averages.length === 0) {
+  if (matches.length === 0 || combined.length === 0) {
     return (
       <section className="panel">
         <div className="panel-head">
           <h2>Grafikler</h2>
         </div>
         <p className="muted">
-          Maç maç reyting girince ortalama, form ve sıralama burada görünecek.
+          Her iki takıma maç maç reyting girince karşılaştırma ve form burada çıkar.
         </p>
       </section>
     )
@@ -61,13 +77,13 @@ export default function Stats({ players, matches }) {
     <section className="panel stats-panel">
       <div className="panel-head">
         <h2>Grafikler</h2>
-        <span className="chip">ort. {formatRating(teamAvg)}</span>
+        <span className="chip">{matches.length} maç</span>
       </div>
 
       <div className="stat-cards">
-        <div className="stat-card">
-          <span className="stat-label">Takım ort.</span>
-          <strong style={{ color: ratingColor(teamAvg) }}>{formatRating(teamAvg)}</strong>
+        <div className="stat-card stat-card--home">
+          <span className="stat-label">{home.name}</span>
+          <strong style={{ color: ratingColor(homeTeam) }}>{formatRating(homeTeam)}</strong>
         </div>
         <div className="stat-card">
           <span className="stat-label">En formda</span>
@@ -75,17 +91,17 @@ export default function Stats({ players, matches }) {
             {topPlayer?.fullName || '—'}
           </strong>
         </div>
-        <div className="stat-card">
-          <span className="stat-label">Maç sayısı</span>
-          <strong>{matches.length}</strong>
+        <div className="stat-card stat-card--away">
+          <span className="stat-label">{away.name}</span>
+          <strong style={{ color: ratingColor(awayTeam) }}>{formatRating(awayTeam)}</strong>
         </div>
       </div>
 
       <div className="chart-block">
-        <h3>Oyuncu ortalamaları</h3>
+        <h3>Takım ortalaması</h3>
         <div className="chart-box">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={averages} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={compareData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid stroke="rgba(240,244,232,0.08)" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -99,14 +115,54 @@ export default function Stats({ players, matches }) {
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip
-                contentStyle={tipStyle}
-                formatter={(v, _, item) => [Number(v).toFixed(2), item.payload.fullName]}
-              />
-              <Bar dataKey="avg" fill="#b8f53a" radius={[6, 6, 0, 0]} maxBarSize={36} />
+              <Tooltip contentStyle={tipStyle} formatter={(v) => [Number(v).toFixed(2), 'Ort.']} />
+              <Bar dataKey="ort" radius={[6, 6, 0, 0]} maxBarSize={48}>
+                {compareData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="chart-block">
+        <h3>Oyuncu ortalamaları</h3>
+        <div className="chart-box">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={combined} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <CartesianGrid stroke="rgba(240,244,232,0.08)" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: 'rgba(240,244,232,0.55)', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[0, 10]}
+                tick={{ fill: 'rgba(240,244,232,0.45)', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={tipStyle}
+                formatter={(v, _, item) => [
+                  Number(v).toFixed(2),
+                  `${item.payload.fullName} (${item.payload.team})`,
+                ]}
+              />
+              <Bar dataKey="avg" radius={[6, 6, 0, 0]} maxBarSize={28}>
+                {combined.map((entry) => (
+                  <Cell key={entry.id} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="chart-legend">
+          <span className="legend-home">{home.name}</span>
+          <span className="legend-away">{away.name}</span>
+        </p>
       </div>
 
       {formSeries.length > 1 && (
@@ -132,10 +188,9 @@ export default function Stats({ players, matches }) {
                 <Line
                   type="monotone"
                   dataKey="rating"
-                  stroke="#b8f53a"
+                  stroke={topPlayer.fill}
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#b8f53a', stroke: '#0d1f14', strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ r: 4, fill: topPlayer.fill, stroke: '#0d1f14', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -144,12 +199,15 @@ export default function Stats({ players, matches }) {
       )}
 
       <div className="leaderboard">
-        <h3>Sıralama</h3>
+        <h3>Genel sıralama</h3>
         <ol>
-          {averages.map((p, i) => (
+          {combined.map((p, i) => (
             <li key={p.id}>
               <span className="rank">#{i + 1}</span>
-              <span className="lb-name">{p.fullName}</span>
+              <span className="lb-name">
+                {p.fullName}
+                <small className={p.fill === HOME_COLOR ? 'tag-home' : 'tag-away'}> {p.team}</small>
+              </span>
               <span className="lb-avg" style={{ color: ratingColor(p.avg) }}>
                 {formatRating(p.avg)}
               </span>

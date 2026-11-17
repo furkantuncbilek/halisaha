@@ -1,8 +1,55 @@
 import { useState } from 'react'
 import { ratingColor } from '../utils/formations'
 
+function TeamRatingBlock({ title, side, players, match, readOnly, onSetRating }) {
+  if (!players.length) {
+    return (
+      <div className={`rating-team rating-team--${side}`}>
+        <h4>{title}</h4>
+        <p className="muted">Oyuncu yok.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`rating-team rating-team--${side}`}>
+      <h4>{title}</h4>
+      <div className="rating-grid">
+        {players.map((p) => {
+          const val = match.ratings?.[p.id]
+          return (
+            <label key={p.id} className="rating-cell">
+              <span className="rating-cell-name">{p.name}</span>
+              {readOnly ? (
+                <span className="rating-display" style={{ color: ratingColor(val) }}>
+                  {val != null && val !== '' ? Number(val).toFixed(1) : '—'}
+                </span>
+              ) : (
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  inputMode="decimal"
+                  placeholder="0–10"
+                  value={val ?? ''}
+                  onChange={(e) => onSetRating(match.id, p.id, e.target.value)}
+                  style={{
+                    borderColor: val != null && val !== '' ? ratingColor(val) : undefined,
+                  }}
+                />
+              )}
+            </label>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function MatchRatings({
-  players,
+  home,
+  away,
   matches,
   readOnly,
   onAddMatch,
@@ -12,6 +59,7 @@ export default function MatchRatings({
 }) {
   const [label, setLabel] = useState('')
   const [openId, setOpenId] = useState(matches.at(-1)?.id || null)
+  const totalPlayers = home.players.length + away.players.length
 
   const submit = (e) => {
     e.preventDefault()
@@ -34,23 +82,24 @@ export default function MatchRatings({
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Maç adı — örn. Perşembe 22:00"
+            placeholder={`${home.name} vs ${away.name}`}
             maxLength={40}
           />
-          <button type="submit" className="btn btn-accent" disabled={players.length === 0}>
+          <button type="submit" className="btn btn-accent" disabled={totalPlayers === 0}>
             Maç ekle
           </button>
         </form>
       )}
 
-      {players.length === 0 && (
-        <p className="muted">Önce oyuncu ekle, sonra maç reytingi gir.</p>
+      {totalPlayers === 0 && (
+        <p className="muted">Önce her iki takıma oyuncu ekle.</p>
       )}
 
       <div className="match-list">
         {sorted.map((m) => {
           const open = openId === m.id
-          const filled = Object.values(m.ratings || {}).filter((r) => r != null && r !== '').length
+          const ids = [...home.players, ...away.players].map((p) => p.id)
+          const filled = ids.filter((id) => m.ratings?.[id] != null && m.ratings[id] !== '').length
           return (
             <div key={m.id} className={`match-card ${open ? 'is-open' : ''}`}>
               <button
@@ -61,7 +110,7 @@ export default function MatchRatings({
                 <div>
                   <strong>{m.label}</strong>
                   <small>
-                    {m.date} · {filled}/{players.length} reyting
+                    {m.date} · {filled}/{ids.length} reyting
                   </small>
                 </div>
                 <span className="chev">{open ? '▾' : '▸'}</span>
@@ -97,37 +146,23 @@ export default function MatchRatings({
                     </div>
                   )}
 
-                  <div className="rating-grid">
-                    {players.map((p) => {
-                      const val = m.ratings?.[p.id]
-                      return (
-                        <label key={p.id} className="rating-cell">
-                          <span className="rating-cell-name">{p.name}</span>
-                          {readOnly ? (
-                            <span
-                              className="rating-display"
-                              style={{ color: ratingColor(val) }}
-                            >
-                              {val != null && val !== '' ? Number(val).toFixed(1) : '—'}
-                            </span>
-                          ) : (
-                            <input
-                              type="number"
-                              min="0"
-                              max="10"
-                              step="0.1"
-                              inputMode="decimal"
-                              placeholder="0–10"
-                              value={val ?? ''}
-                              onChange={(e) => onSetRating(m.id, p.id, e.target.value)}
-                              style={{
-                                borderColor: val != null && val !== '' ? ratingColor(val) : undefined,
-                              }}
-                            />
-                          )}
-                        </label>
-                      )
-                    })}
+                  <div className="rating-teams">
+                    <TeamRatingBlock
+                      title={home.name}
+                      side="home"
+                      players={home.players}
+                      match={m}
+                      readOnly={readOnly}
+                      onSetRating={onSetRating}
+                    />
+                    <TeamRatingBlock
+                      title={away.name}
+                      side="away"
+                      players={away.players}
+                      match={m}
+                      readOnly={readOnly}
+                      onSetRating={onSetRating}
+                    />
                   </div>
                 </div>
               )}

@@ -1,12 +1,43 @@
 import LZString from 'lz-string'
+import { DEFAULT_FORMATIONATION, createEmptyLineup, createTeam } from './formations'
 
-const STORAGE_KEY = 'saha-squad-v1'
+const STORAGE_KEY = 'saha-squad-v2'
+const LEGACY_KEY = 'saha-squad-v1'
+
+export function defaultState() {
+  return {
+    home: createTeam('Ev Sahibi'),
+    away: createTeam('Deplasman'),
+    matches: [],
+  }
+}
+
+function migrateLegacy(legacy) {
+  if (!legacy) return null
+  if (legacy.home && legacy.away) return legacy
+  if (!legacy.players && !legacy.teamName) return null
+  return {
+    home: {
+      name: legacy.teamName || 'Ev Sahibi',
+      formation: legacy.formation || DEFAULT_FORMATIONATION,
+      players: legacy.players || [],
+      lineup: legacy.lineup || createEmptyLineup(legacy.formation || DEFAULT_FORMATIONATION),
+    },
+    away: createTeam('Deplasman', legacy.formation || DEFAULT_FORMATIONATION),
+    matches: legacy.matches || [],
+  }
+}
 
 export function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return migrateLegacy(parsed) || parsed
+    }
+    const legacy = localStorage.getItem(LEGACY_KEY)
+    if (legacy) return migrateLegacy(JSON.parse(legacy))
+    return null
   } catch {
     return null
   }
@@ -22,10 +53,8 @@ export function saveState(state) {
 
 export function encodeShare(state) {
   const payload = {
-    teamName: state.teamName,
-    formation: state.formation,
-    players: state.players,
-    lineup: state.lineup,
+    home: state.home,
+    away: state.away,
     matches: state.matches,
   }
   return LZString.compressToEncodedURIComponent(JSON.stringify(payload))
@@ -35,7 +64,7 @@ export function decodeShare(code) {
   try {
     const json = LZString.decompressFromEncodedURIComponent(code)
     if (!json) return null
-    return JSON.parse(json)
+    return migrateLegacy(JSON.parse(json))
   } catch {
     return null
   }
@@ -62,6 +91,17 @@ export function createMatch(label, playerIds) {
   }
 }
 
+export function allPlayerIds(state) {
+  return [...(state.home?.players || []), ...(state.away?.players || [])].map((p) => p.id)
+}
+
+export function allPlayers(state) {
+  return [
+    ...(state.home?.players || []).map((p) => ({ ...p, team: 'home' })),
+    ...(state.away?.players || []).map((p) => ({ ...p, team: 'away' })),
+  ]
+}
+
 export function getPlayerAvg(playerId, matches) {
   const vals = matches
     .map((m) => m.ratings?.[playerId])
@@ -78,10 +118,19 @@ export function getPlayerForm(playerId, matches, lastN = 5) {
     .map((m) => ({
       match: m.label,
       date: m.date,
-      rating: m.ratings?.[playerId] != null && m.ratings[playerId] !== ''
-        ? Number(m.ratings[playerId])
-        : null,
+      rating:
+        m.ratings?.[playerId] != null && m.ratings[playerId] !== ''
+          ? Number(m.ratings[playerId])
+          : null,
     }))
     .filter((x) => x.rating != null)
     .slice(-lastN)
+}
+
+export function getTeamAvg(players, matches) {
+  const avgs = players
+    .map((p) => getPlayerAvg(p.id, matches))
+    .filter((v) => v != null)
+  if (!avgs.length) return null
+  return avgs.reduce((a, b) => a + b, 0) / avgs.length
 }

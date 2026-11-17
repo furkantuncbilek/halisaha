@@ -1,68 +1,69 @@
-/** Halı saha formasyonları — pozisyonlar % (x, y) olarak saha üzerinde */
+/** Formasyonlar — y: kendi kalesinden ortaya (0–100), x: sol–sağ */
 export const FORMATIONS = {
   '5v5-2-1-1': {
     label: '5v5 · 2-1-1',
     slots: 5,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 88 },
-      { id: 'dl', role: 'DS', x: 28, y: 68 },
-      { id: 'dr', role: 'DS', x: 72, y: 68 },
-      { id: 'cm', role: 'OS', x: 50, y: 48 },
-      { id: 'st', role: 'FV', x: 50, y: 22 },
+      { id: 'gk', role: 'KL', x: 50, y: 8 },
+      { id: 'dl', role: 'DS', x: 28, y: 38 },
+      { id: 'dr', role: 'DS', x: 72, y: 38 },
+      { id: 'cm', role: 'OS', x: 50, y: 62 },
+      { id: 'st', role: 'FV', x: 50, y: 88 },
     ],
   },
   '5v5-1-2-1': {
     label: '5v5 · 1-2-1',
     slots: 5,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 88 },
-      { id: 'cb', role: 'STP', x: 50, y: 68 },
-      { id: 'ml', role: 'OS', x: 28, y: 45 },
-      { id: 'mr', role: 'OS', x: 72, y: 45 },
-      { id: 'st', role: 'FV', x: 50, y: 22 },
+      { id: 'gk', role: 'KL', x: 50, y: 8 },
+      { id: 'cb', role: 'STP', x: 50, y: 38 },
+      { id: 'ml', role: 'OS', x: 28, y: 62 },
+      { id: 'mr', role: 'OS', x: 72, y: 62 },
+      { id: 'st', role: 'FV', x: 50, y: 88 },
     ],
   },
   '6v6-2-2-1': {
     label: '6v6 · 2-2-1',
     slots: 6,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 90 },
-      { id: 'dl', role: 'DS', x: 28, y: 70 },
-      { id: 'dr', role: 'DS', x: 72, y: 70 },
-      { id: 'ml', role: 'OS', x: 32, y: 45 },
-      { id: 'mr', role: 'OS', x: 68, y: 45 },
-      { id: 'st', role: 'FV', x: 50, y: 20 },
+      { id: 'gk', role: 'KL', x: 50, y: 6 },
+      { id: 'dl', role: 'DS', x: 28, y: 32 },
+      { id: 'dr', role: 'DS', x: 72, y: 32 },
+      { id: 'ml', role: 'OS', x: 32, y: 58 },
+      { id: 'mr', role: 'OS', x: 68, y: 58 },
+      { id: 'st', role: 'FV', x: 50, y: 88 },
     ],
   },
   '7v7-2-3-1': {
     label: '7v7 · 2-3-1',
     slots: 7,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 92 },
-      { id: 'dl', role: 'DS', x: 30, y: 72 },
-      { id: 'dr', role: 'DS', x: 70, y: 72 },
-      { id: 'ml', role: 'OS', x: 22, y: 48 },
-      { id: 'mc', role: 'OS', x: 50, y: 48 },
-      { id: 'mr', role: 'OS', x: 78, y: 48 },
-      { id: 'st', role: 'FV', x: 50, y: 20 },
+      { id: 'gk', role: 'KL', x: 50, y: 5 },
+      { id: 'dl', role: 'DS', x: 30, y: 30 },
+      { id: 'dr', role: 'DS', x: 70, y: 30 },
+      { id: 'ml', role: 'OS', x: 22, y: 58 },
+      { id: 'mc', role: 'OS', x: 50, y: 55 },
+      { id: 'mr', role: 'OS', x: 78, y: 58 },
+      { id: 'st', role: 'FV', x: 50, y: 88 },
     ],
   },
   '7v7-3-2-1': {
     label: '7v7 · 3-2-1',
     slots: 7,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 92 },
-      { id: 'dl', role: 'DS', x: 22, y: 70 },
-      { id: 'dc', role: 'STP', x: 50, y: 72 },
-      { id: 'dr', role: 'DS', x: 78, y: 70 },
-      { id: 'ml', role: 'OS', x: 35, y: 45 },
-      { id: 'mr', role: 'OS', x: 65, y: 45 },
-      { id: 'st', role: 'FV', x: 50, y: 20 },
+      { id: 'gk', role: 'KL', x: 50, y: 5 },
+      { id: 'dl', role: 'DS', x: 22, y: 30 },
+      { id: 'dc', role: 'STP', x: 50, y: 28 },
+      { id: 'dr', role: 'DS', x: 78, y: 30 },
+      { id: 'ml', role: 'OS', x: 35, y: 58 },
+      { id: 'mr', role: 'OS', x: 65, y: 58 },
+      { id: 'st', role: 'FV', x: 50, y: 88 },
     ],
   },
 }
 
 export const DEFAULT_FORMATIONATION = '5v5-2-1-1'
+export const TEAM_KEYS = ['home', 'away']
 
 export function createEmptyLineup(formationKey) {
   const formation = FORMATIONS[formationKey] || FORMATIONS[DEFAULT_FORMATIONATION]
@@ -71,6 +72,24 @@ export function createEmptyLineup(formationKey) {
     lineup[pos.id] = null
   })
   return lineup
+}
+
+/** Ev sahibi: alt yarı. Deplasman: üst yarı (ayna). */
+export function mapPitchPosition(pos, side) {
+  const half = pos.y * 0.46
+  if (side === 'home') {
+    return { x: pos.x, y: 52 + half }
+  }
+  return { x: 100 - pos.x, y: 48 - half }
+}
+
+export function createTeam(name, formation = DEFAULT_FORMATIONATION) {
+  return {
+    name,
+    formation,
+    players: [],
+    lineup: createEmptyLineup(formation),
+  }
 }
 
 export function ratingColor(rating) {
@@ -86,4 +105,8 @@ export function ratingColor(rating) {
 export function formatRating(rating) {
   if (rating == null || rating === '') return '—'
   return Number(rating).toFixed(1)
+}
+
+export function teamAccent(side) {
+  return side === 'home' ? 'home' : 'away'
 }

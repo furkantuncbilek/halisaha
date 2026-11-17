@@ -1,21 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DEFAULT_FORMATIONATION, createEmptyLineup } from '../utils/formations'
+import { createEmptyLineup } from '../utils/formations'
 import {
+  allPlayerIds,
   createMatch,
   createPlayer,
   decodeShare,
+  defaultState,
   encodeShare,
   loadState,
   saveState,
 } from '../utils/storage'
 
-const defaultState = () => ({
-  teamName: 'Ekibimiz',
-  formation: DEFAULT_FORMATIONATION,
-  players: [],
-  lineup: createEmptyLineup(DEFAULT_FORMATIONATION),
-  matches: [],
-})
+function normalizeLoaded(raw) {
+  const base = defaultState()
+  if (!raw) return { ...base, readOnly: false, fromShare: false }
+  return {
+    home: { ...base.home, ...raw.home },
+    away: { ...base.away, ...raw.away },
+    matches: raw.matches || [],
+    readOnly: false,
+    fromShare: false,
+  }
+}
 
 export function useSquad() {
   const [state, setState] = useState(() => {
@@ -24,15 +30,13 @@ export function useSquad() {
       const decoded = decodeShare(shared)
       if (decoded) {
         return {
-          ...defaultState(),
-          ...decoded,
-          lineup: decoded.lineup || createEmptyLineup(decoded.formation || DEFAULT_FORMATIONATION),
+          ...normalizeLoaded(decoded),
           readOnly: true,
           fromShare: true,
         }
       }
     }
-    return { ...defaultState(), ...loadState(), readOnly: false, fromShare: false }
+    return normalizeLoaded(loadState())
   })
 
   useEffect(() => {
@@ -41,38 +45,50 @@ export function useSquad() {
     saveState(persist)
   }, [state])
 
-  const setTeamName = useCallback((teamName) => {
-    setState((s) => ({ ...s, teamName }))
-  }, [])
-
-  const setFormation = useCallback((formation) => {
-    setState((s) => {
-      const nextLineup = createEmptyLineup(formation)
-      Object.keys(nextLineup).forEach((slot) => {
-        if (s.lineup[slot]) nextLineup[slot] = s.lineup[slot]
-      })
-      return { ...s, formation, lineup: nextLineup }
-    })
-  }, [])
-
-  const addPlayer = useCallback((name) => {
-    if (!name?.trim()) return
+  const setTeamName = useCallback((side, name) => {
     setState((s) => ({
       ...s,
-      players: [...s.players, createPlayer(name)],
+      [side]: { ...s[side], name },
     }))
   }, [])
 
-  const removePlayer = useCallback((playerId) => {
+  const setFormation = useCallback((side, formation) => {
     setState((s) => {
-      const lineup = { ...s.lineup }
+      const nextLineup = createEmptyLineup(formation)
+      Object.keys(nextLineup).forEach((slot) => {
+        if (s[side].lineup[slot]) nextLineup[slot] = s[side].lineup[slot]
+      })
+      return {
+        ...s,
+        [side]: { ...s[side], formation, lineup: nextLineup },
+      }
+    })
+  }, [])
+
+  const addPlayer = useCallback((side, name) => {
+    if (!name?.trim()) return
+    setState((s) => ({
+      ...s,
+      [side]: {
+        ...s[side],
+        players: [...s[side].players, createPlayer(name)],
+      },
+    }))
+  }, [])
+
+  const removePlayer = useCallback((side, playerId) => {
+    setState((s) => {
+      const lineup = { ...s[side].lineup }
       Object.keys(lineup).forEach((k) => {
         if (lineup[k] === playerId) lineup[k] = null
       })
       return {
         ...s,
-        players: s.players.filter((p) => p.id !== playerId),
-        lineup,
+        [side]: {
+          ...s[side],
+          players: s[side].players.filter((p) => p.id !== playerId),
+          lineup,
+        },
         matches: s.matches.map((m) => {
           const ratings = { ...m.ratings }
           delete ratings[playerId]
@@ -82,40 +98,40 @@ export function useSquad() {
     })
   }, [])
 
-  const renamePlayer = useCallback((playerId, name) => {
-    setState((s) => ({
-      ...s,
-      players: s.players.map((p) =>
-        p.id === playerId ? { ...p, name: name.trim() || p.name } : p
-      ),
-    }))
-  }, [])
-
-  const assignSlot = useCallback((slotId, playerId) => {
+  const assignSlot = useCallback((side, slotId, playerId) => {
     setState((s) => {
-      const lineup = { ...s.lineup }
+      // Oyuncu yalnızca kendi takımında olabilir
+      const belongsHome = s.home.players.some((p) => p.id === playerId)
+      const belongsAway = s.away.players.some((p) => p.id === playerId)
+      const actualSide = belongsHome ? 'home' : belongsAway ? 'away' : side
+      if (actualSide !== side) return s
+
+      const lineup = { ...s[actualSide].lineup }
       Object.keys(lineup).forEach((k) => {
         if (lineup[k] === playerId) lineup[k] = null
       })
       lineup[slotId] = playerId
-      return { ...s, lineup }
+      return {
+        ...s,
+        [actualSide]: { ...s[actualSide], lineup },
+      }
     })
   }, [])
 
-  const clearSlot = useCallback((slotId) => {
+  const clearSlot = useCallback((side, slotId) => {
     setState((s) => ({
       ...s,
-      lineup: { ...s.lineup, [slotId]: null },
+      [side]: {
+        ...s[side],
+        lineup: { ...s[side].lineup, [slotId]: null },
+      },
     }))
   }, [])
 
   const addMatch = useCallback((label) => {
     setState((s) => ({
       ...s,
-      matches: [
-        ...s.matches,
-        createMatch(label, s.players.map((p) => p.id)),
-      ],
+      matches: [...s.matches, createMatch(label, allPlayerIds(s))],
     }))
   }, [])
 
@@ -151,22 +167,19 @@ export function useSquad() {
 
   const cloneShared = useCallback(() => {
     setState((s) => {
-      const next = {
-        teamName: s.teamName,
-        formation: s.formation,
-        players: s.players,
-        lineup: s.lineup,
+      window.history.replaceState({}, '', window.location.pathname)
+      return {
+        home: s.home,
+        away: s.away,
         matches: s.matches,
         readOnly: false,
         fromShare: false,
       }
-      window.history.replaceState({}, '', window.location.pathname)
-      return next
     })
   }, [])
 
   const resetAll = useCallback(() => {
-    if (!window.confirm('Tüm kadro ve maçlar silinsin mi?')) return
+    if (!window.confirm('Her iki takım ve tüm maçlar silinsin mi?')) return
     window.history.replaceState({}, '', window.location.pathname)
     setState({ ...defaultState(), readOnly: false, fromShare: false })
   }, [])
@@ -176,10 +189,13 @@ export function useSquad() {
     return `${window.location.origin}${window.location.pathname}?s=${code}`
   }, [state])
 
-  const bench = useMemo(() => {
-    const onPitch = new Set(Object.values(state.lineup).filter(Boolean))
-    return state.players.filter((p) => !onPitch.has(p.id))
-  }, [state.players, state.lineup])
+  const bench = useCallback(
+    (side) => {
+      const onPitch = new Set(Object.values(state[side].lineup).filter(Boolean))
+      return state[side].players.filter((p) => !onPitch.has(p.id))
+    },
+    [state]
+  )
 
   return {
     state,
@@ -189,7 +205,6 @@ export function useSquad() {
     setFormation,
     addPlayer,
     removePlayer,
-    renamePlayer,
     assignSlot,
     clearSlot,
     addMatch,

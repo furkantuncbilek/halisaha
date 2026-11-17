@@ -136,26 +136,43 @@ button {
   letter-spacing: 0.04em;
 }
 
-.team-name input {
-  width: min(220px, 42vw);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid var(--stroke);
-  padding: 0.35rem 0.15rem;
+.vs-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  max-width: min(360px, 100%);
+}
+
+.vs-home,
+.vs-away {
   font-family: var(--font-display);
-  font-size: 1.55rem;
+  font-size: clamp(1.2rem, 4vw, 1.7rem);
   letter-spacing: 0.03em;
-  text-align: right;
-  outline: none;
-  transition: border-color 0.2s;
+  line-height: 1;
+  max-width: 9ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.team-name input:focus {
-  border-color: var(--lime);
+.vs-home {
+  color: var(--lime);
 }
 
-.team-name input:disabled {
-  opacity: 0.75;
+.vs-away {
+  color: #5ec8ff;
+}
+
+.vs-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--bg);
+  background: rgba(240, 244, 232, 0.85);
+  border-radius: 999px;
+  padding: 0.28rem 0.5rem;
 }
 
 /* Share */
@@ -222,9 +239,9 @@ button {
   gap: 1rem;
 }
 
-@media (min-width: 860px) {
+@media (min-width: 960px) {
   .layout-pitch {
-    grid-template-columns: 1.35fr 0.9fr;
+    grid-template-columns: 1.25fr 0.95fr;
     align-items: start;
   }
 }
@@ -234,29 +251,9 @@ button {
   gap: 0.85rem;
 }
 
-.formation-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  align-items: end;
-  justify-content: space-between;
-}
-
-.formation-row label {
+.teams-column {
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  color: var(--chalk-dim);
-  font-weight: 600;
-}
-
-.formation-row select {
-  min-width: 160px;
-  background: var(--panel);
-  border: 1px solid var(--stroke);
-  border-radius: 10px;
-  padding: 0.55rem 0.7rem;
-  outline: none;
+  gap: 0.85rem;
 }
 
 .hint {
@@ -266,14 +263,102 @@ button {
   max-width: 260px;
 }
 
+.hint-center {
+  max-width: none;
+  text-align: center;
+}
+
+.team-controls {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.team-controls label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+  font-weight: 600;
+}
+
+.team-controls input,
+.team-controls select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--chalk-faint);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  outline: none;
+}
+
+.team-controls input:focus,
+.team-controls select:focus {
+  border-color: var(--lime);
+}
+
+.panel--away .team-controls input:focus,
+.panel--away .team-controls select:focus {
+  border-color: #5ec8ff;
+}
+
+.chip--home {
+  color: var(--lime);
+}
+
+.chip--away {
+  color: #5ec8ff;
+  background: rgba(94, 200, 255, 0.12);
+  border-color: rgba(94, 200, 255, 0.25);
+}
+
+.btn--away {
+  background: #5ec8ff;
+  color: #062033;
+}
+
 /* Pitch */
 .pitch-wrap {
+  position: relative;
   border-radius: 22px;
   overflow: hidden;
   border: 1px solid rgba(184, 245, 58, 0.22);
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.45),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.pitch-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pitch-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(7, 20, 12, 0.72);
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pitch-label--away {
+  top: 1.8%;
+  color: #5ec8ff;
+}
+
+.pitch-label--home {
+  bottom: 1.8%;
+  color: var(--lime);
 }
 
 .pitch {
@@ -437,6 +522,12 @@ button {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
+.token--away .token-ring {
+  border-color: #5ec8ff;
+  background:
+    radial-gradient(circle at 35% 30%, #2a6f96, #0c2433 70%);
+}
+
 .token-avg {
   position: absolute;
   top: 14px;
@@ -590,7 +681,7 @@ button {
 .player-list {
   display: grid;
   gap: 0.45rem;
-  max-height: 420px;
+  max-height: 280px;
   overflow: auto;
 }
 
@@ -616,9 +707,19 @@ button {
   background: var(--lime-dim);
 }
 
+.player-row--away.player-row--on {
+  border-color: rgba(94, 200, 255, 0.28);
+  background: rgba(94, 200, 255, 0.1);
+}
+
 .player-row--selected {
   border-color: var(--lime);
   box-shadow: 0 0 0 1px var(--lime);
+}
+
+.player-row--away.player-row--selected {
+  border-color: #5ec8ff;
+  box-shadow: 0 0 0 1px #5ec8ff;
 }
 
 .slot--target .slot-empty {
@@ -736,6 +837,32 @@ button {
   font-weight: 600;
 }
 
+.rating-teams {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .rating-teams {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rating-team h4 {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.rating-team--home h4 {
+  color: var(--lime);
+}
+
+.rating-team--away h4 {
+  color: #5ec8ff;
+}
+
 .rating-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -791,6 +918,54 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stat-card--home {
+  border-color: rgba(184, 245, 58, 0.25);
+}
+
+.stat-card--away {
+  border-color: rgba(94, 200, 255, 0.25);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  color: var(--chalk-dim);
+}
+
+.legend-home::before,
+.legend-away::before {
+  content: '';
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.legend-home::before {
+  background: #b8f53a;
+}
+
+.legend-away::before {
+  background: #5ec8ff;
+}
+
+.tag-home {
+  color: #b8f53a;
+}
+
+.tag-away {
+  color: #5ec8ff;
+}
+
+.lb-name small {
+  font-weight: 600;
+  margin-left: 0.25rem;
 }
 
 .chart-block {
@@ -898,27 +1073,32 @@ button {
     align-items: stretch;
   }
 
-  .team-name input {
-    width: 100%;
-    text-align: left;
+  .vs-title {
+    justify-content: flex-start;
+    max-width: none;
   }
 
   .pitch {
-    min-height: 460px;
+    min-height: 520px;
   }
 
   .slot-empty {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
   }
 
   .token {
-    width: 64px;
+    width: 60px;
   }
 
   .token-ring {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .token-avg {
+    top: 10px;
+    font-size: 1rem;
   }
 
   .stat-cards {
