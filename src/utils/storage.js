@@ -52,11 +52,11 @@ export function saveState(state) {
 }
 
 export function encodeShare(state) {
-  const payload = {
+  const payload = stripPhotos({
     home: state.home,
     away: state.away,
     matches: state.matches,
-  }
+  })
   return LZString.compressToEncodedURIComponent(JSON.stringify(payload))
 }
 
@@ -74,7 +74,25 @@ export function createPlayer(name) {
   return {
     id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     name: name.trim(),
+    photo: null,
     createdAt: Date.now(),
+  }
+}
+
+/** Paylaşım linkini şişirmemek için fotoğrafları çıkar */
+export function stripPhotos(state) {
+  return {
+    home: {
+      ...state.home,
+      logo: null,
+      players: (state.home.players || []).map(({ photo, ...p }) => ({ ...p, photo: null })),
+    },
+    away: {
+      ...state.away,
+      logo: null,
+      players: (state.away.players || []).map(({ photo, ...p }) => ({ ...p, photo: null })),
+    },
+    matches: state.matches,
   }
 }
 

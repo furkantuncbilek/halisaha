@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createEmptyLineup } from '../utils/formations'
+import {
+  FORMATIONS,
+  clampPitch,
+  createEmptyLineup,
+  getSlotPlayerId,
+  mapPitchPosition,
+} from '../utils/formations'
 import {
   allPlayerIds,
   createMatch,
@@ -15,8 +21,8 @@ function normalizeLoaded(raw) {
   const base = defaultState()
   if (!raw) return { ...base, readOnly: false, fromShare: false }
   return {
-    home: { ...base.home, ...raw.home },
-    away: { ...base.away, ...raw.away },
+    home: { ...base.home, ...raw.home, logo: raw.home?.logo ?? null },
+    away: { ...base.away, ...raw.away, logo: raw.away?.logo ?? null },
     matches: raw.matches || [],
     readOnly: false,
     fromShare: false,
@@ -52,11 +58,24 @@ export function useSquad() {
     }))
   }, [])
 
+  const setTeamLogo = useCallback((side, logo) => {
+    setState((s) => ({
+      ...s,
+      [side]: { ...s[side], logo },
+    }))
+  }, [])
+
   const setFormation = useCallback((side, formation) => {
     setState((s) => {
       const nextLineup = createEmptyLineup(formation)
+      const formationDef = FORMATIONS[formation]
       Object.keys(nextLineup).forEach((slot) => {
-        if (s[side].lineup[slot]) nextLineup[slot] = s[side].lineup[slot]
+        const prev = s[side].lineup[slot]
+        const playerId = getSlotPlayerId(prev)
+        if (!playerId) return
+        const pos = formationDef.positions.find((p) => p.id === slot)
+        const mapped = pos ? mapPitchPosition(pos, side) : { x: 50, y: 50 }
+        nextLineup[slot] = { playerId, x: mapped.x, y: mapped.y }
       })
       return {
         ...s,
@@ -76,11 +95,23 @@ export function useSquad() {
     }))
   }, [])
 
+  const setPlayerPhoto = useCallback((side, playerId, photo) => {
+    setState((s) => ({
+      ...s,
+      [side]: {
+        ...s[side],
+        players: s[side].players.map((p) =>
+          p.id === playerId ? { ...p, photo } : p
+        ),
+      },
+    }))
+  }, [])
+
   const removePlayer = useCallback((side, playerId) => {
     setState((s) => {
       const lineup = { ...s[side].lineup }
       Object.keys(lineup).forEach((k) => {
-        if (lineup[k] === playerId) lineup[k] = null
+        if (getSlotPlayerId(lineup[k]) === playerId) lineup[k] = null
       })
       return {
         ...s,
@@ -100,20 +131,42 @@ export function useSquad() {
 
   const assignSlot = useCallback((side, slotId, playerId) => {
     setState((s) => {
-      // Oyuncu yalnızca kendi takımında olabilir
       const belongsHome = s.home.players.some((p) => p.id === playerId)
       const belongsAway = s.away.players.some((p) => p.id === playerId)
       const actualSide = belongsHome ? 'home' : belongsAway ? 'away' : side
       if (actualSide !== side) return s
 
+      const formation = FORMATIONS[s[actualSide].formation]
+      const pos = formation.positions.find((p) => p.id === slotId)
+      const mapped = pos ? mapPitchPosition(pos, actualSide) : { x: 50, y: 50 }
+
       const lineup = { ...s[actualSide].lineup }
       Object.keys(lineup).forEach((k) => {
-        if (lineup[k] === playerId) lineup[k] = null
+        if (getSlotPlayerId(lineup[k]) === playerId) lineup[k] = null
       })
-      lineup[slotId] = playerId
+      lineup[slotId] = { playerId, x: mapped.x, y: mapped.y }
       return {
         ...s,
         [actualSide]: { ...s[actualSide], lineup },
+      }
+    })
+  }, [])
+
+  const moveSlot = useCallback((side, slotId, x, y) => {
+    setState((s) => {
+      const current = s[side].lineup[slotId]
+      const playerId = getSlotPlayerId(current)
+      if (!playerId) return s
+      const next = clampPitch(x, y)
+      return {
+        ...s,
+        [side]: {
+          ...s[side],
+          lineup: {
+            ...s[side].lineup,
+            [slotId]: { playerId, x: next.x, y: next.y },
+          },
+        },
       }
     })
   }, [])
@@ -191,7 +244,11 @@ export function useSquad() {
 
   const bench = useCallback(
     (side) => {
-      const onPitch = new Set(Object.values(state[side].lineup).filter(Boolean))
+      const onPitch = new Set(
+        Object.values(state[side].lineup)
+          .map(getSlotPlayerId)
+          .filter(Boolean)
+      )
       return state[side].players.filter((p) => !onPitch.has(p.id))
     },
     [state]
@@ -202,10 +259,13 @@ export function useSquad() {
     bench,
     shareUrl,
     setTeamName,
+    setTeamLogo,
     setFormation,
     addPlayer,
+    setPlayerPhoto,
     removePlayer,
     assignSlot,
+    moveSlot,
     clearSlot,
     addMatch,
     removeMatch,

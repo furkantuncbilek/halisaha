@@ -83,12 +83,35 @@ export function mapPitchPosition(pos, side) {
   return { x: 100 - pos.x, y: 48 - half }
 }
 
+export function normalizeSlot(lineupSlot, formationPos, side) {
+  if (!lineupSlot) return null
+  if (typeof lineupSlot === 'string') {
+    const mapped = mapPitchPosition(formationPos, side)
+    return { playerId: lineupSlot, x: mapped.x, y: mapped.y }
+  }
+  return lineupSlot
+}
+
+export function getSlotPlayerId(lineupSlot) {
+  if (!lineupSlot) return null
+  if (typeof lineupSlot === 'string') return lineupSlot
+  return lineupSlot.playerId || null
+}
+
 export function createTeam(name, formation = DEFAULT_FORMATIONATION) {
   return {
     name,
+    logo: null,
     formation,
     players: [],
     lineup: createEmptyLineup(formation),
+  }
+}
+
+export function clampPitch(x, y) {
+  return {
+    x: Math.min(94, Math.max(6, x)),
+    y: Math.min(94, Math.max(6, y)),
   }
 }
 

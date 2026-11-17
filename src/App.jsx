@@ -51,14 +51,21 @@ export default function App() {
         </div>
 
         <div className="vs-title" aria-label="Maç">
-          <span className="vs-home">{state.home.name}</span>
+          <span className="vs-home">
+            {state.home.logo && <img src={state.home.logo} alt="" />}
+            {state.home.name}
+          </span>
           <span className="vs-badge">VS</span>
-          <span className="vs-away">{state.away.name}</span>
+          <span className="vs-away">
+            {state.away.logo && <img src={state.away.logo} alt="" />}
+            {state.away.name}
+          </span>
         </div>
       </header>
 
       <ShareBar
         shareUrl={shareUrl}
+        state={state}
         readOnly={state.readOnly}
         fromShare={state.fromShare}
         onClone={squad.cloneShared}
@@ -84,8 +91,8 @@ export default function App() {
             <div className="pitch-column">
               <p className="hint hint-center">
                 {selectedName
-                  ? `${selectedName} seçili (${selected.side === 'home' ? state.home.name : state.away.name}) — kendi yarı sahasına dokun.`
-                  : 'Oyuncuya dokun, kendi takımının pozisyonuna yerleştir.'}
+                  ? `${selectedName} seçili — boş pozisyona dokun veya sahada sürükle.`
+                  : 'Oyuncuyu pozisyona koy, sonra sahada sürükleyerek yerini ayarla.'}
               </p>
 
               <Pitch
@@ -97,6 +104,7 @@ export default function App() {
                 selectedSide={selected.side}
                 onAssign={handleAssign}
                 onClear={squad.clearSlot}
+                onMove={squad.moveSlot}
                 onSelectPlayer={selectPlayer}
               />
             </div>
@@ -115,6 +123,8 @@ export default function App() {
                 onSelectPlayer={selectPlayer}
                 onSetFormation={squad.setFormation}
                 onSetTeamName={squad.setTeamName}
+                onSetTeamLogo={squad.setTeamLogo}
+                onSetPlayerPhoto={squad.setPlayerPhoto}
               />
               <PlayerPanel
                 side="away"
@@ -129,6 +139,8 @@ export default function App() {
                 onSelectPlayer={selectPlayer}
                 onSetFormation={squad.setFormation}
                 onSetTeamName={squad.setTeamName}
+                onSetTeamLogo={squad.setTeamLogo}
+                onSetPlayerPhoto={squad.setPlayerPhoto}
               />
             </div>
           </div>

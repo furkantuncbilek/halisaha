@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { FORMATIONS, formatRating, ratingColor } from '../utils/formations'
+import { compressImage } from '../utils/image'
 import { getPlayerAvg } from '../utils/storage'
 
 export default function PlayerPanel({
@@ -15,14 +16,39 @@ export default function PlayerPanel({
   onSelectPlayer,
   onSetFormation,
   onSetTeamName,
+  onSetTeamLogo,
+  onSetPlayerPhoto,
 }) {
   const [name, setName] = useState('')
+  const logoInputRef = useRef(null)
 
   const submit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
     onAdd(side, name)
     setName('')
+  }
+
+  const onLogoPick = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const data = await compressImage(file, 180, 0.75)
+      onSetTeamLogo(side, data)
+    } catch {
+      alert('Fotoğraf eklenemedi')
+    }
+  }
+
+  const onPlayerPhoto = async (playerId, file) => {
+    if (!file) return
+    try {
+      const data = await compressImage(file, 160, 0.72)
+      onSetPlayerPhoto(side, playerId, data)
+    } catch {
+      alert('Oyuncu fotoğrafı eklenemedi')
+    }
   }
 
   return (
@@ -32,31 +58,63 @@ export default function PlayerPanel({
         <span className={`chip chip--${side}`}>{team.players.length} kişi</span>
       </div>
 
-      <div className="team-controls">
-        <label>
-          Takım adı
-          <input
-            type="text"
-            value={team.name}
-            disabled={readOnly}
-            maxLength={24}
-            onChange={(e) => onSetTeamName(side, e.target.value)}
-          />
-        </label>
-        <label>
-          Formasyon
-          <select
-            value={team.formation}
-            disabled={readOnly}
-            onChange={(e) => onSetFormation(side, e.target.value)}
-          >
-            {Object.entries(FORMATIONS).map(([key, f]) => (
-              <option key={key} value={key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="team-identity">
+        <button
+          type="button"
+          className={`team-logo-btn team-logo-btn--${side}`}
+          disabled={readOnly}
+          onClick={() => logoInputRef.current?.click()}
+          title="Takım logosu / fotoğraf"
+        >
+          {team.logo ? (
+            <img src={team.logo} alt="" />
+          ) : (
+            <span>+</span>
+          )}
+        </button>
+        <input
+          ref={logoInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={onLogoPick}
+        />
+        <div className="team-controls">
+          <label>
+            Takım adı
+            <input
+              type="text"
+              value={team.name}
+              disabled={readOnly}
+              maxLength={24}
+              onChange={(e) => onSetTeamName(side, e.target.value)}
+              placeholder="Takım ismi"
+            />
+          </label>
+          <label>
+            Formasyon
+            <select
+              value={team.formation}
+              disabled={readOnly}
+              onChange={(e) => onSetFormation(side, e.target.value)}
+            >
+              {Object.entries(FORMATIONS).map(([key, f]) => (
+                <option key={key} value={key}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {!readOnly && team.logo && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-slim"
+              onClick={() => onSetTeamLogo(side, null)}
+            >
+              Logoyu kaldır
+            </button>
+          )}
+        </div>
       </div>
 
       {!readOnly && (
@@ -77,7 +135,7 @@ export default function PlayerPanel({
 
       <div className="player-list">
         {team.players.length === 0 && (
-          <p className="muted">Bu takıma oyuncu ekle.</p>
+          <p className="muted">Bu takıma oyuncu ekle. İstersen fotoğraf da ekle.</p>
         )}
         {team.players.map((p) => {
           const avg = getPlayerAvg(p.id, matches)
@@ -107,11 +165,37 @@ export default function PlayerPanel({
               }}
             >
               <div className="player-row-main">
-                <span className="player-dot" style={{ background: ratingColor(avg) }} />
+                <label
+                  className="player-avatar"
+                  onClick={(e) => e.stopPropagation()}
+                  title={readOnly ? p.name : 'Fotoğraf ekle'}
+                >
+                  {p.photo ? (
+                    <img src={p.photo} alt="" />
+                  ) : (
+                    <span style={{ background: ratingColor(avg) }} />
+                  )}
+                  {!readOnly && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        e.target.value = ''
+                        onPlayerPhoto(p.id, file)
+                      }}
+                    />
+                  )}
+                </label>
                 <div>
                   <strong>{p.name}</strong>
                   <small>
-                    {selected ? 'Seçili — kendi sahasına koy' : isBench ? 'Yedek' : 'Sahada'}
+                    {selected
+                      ? 'Seçili — pozisyona koy / sürükle'
+                      : isBench
+                        ? 'Yedek'
+                        : 'Sahada · sürükleyerek ayarla'}
                   </small>
                 </div>
               </div>
