@@ -168,11 +168,12 @@ export default function Pitch({
   const [dragPos, setDragPos] = useState(null)
 
   return (
-    <div className="pitch-wrap" id="saha-pitch-card">
-      <div className="pitch-banner pitch-banner--away">
-        {away.logo && <img src={away.logo} alt="" className="pitch-logo" />}
+    <div className="pitch-shell" id="saha-pitch-card">
+      <div className="pitch-side-tag pitch-side-tag--away">
+        {away.logo ? <img src={away.logo} alt="" /> : null}
         <span>{away.name}</span>
       </div>
+      <div className="pitch-wrap">
       <div
         className="pitch"
         ref={pitchRef}
@@ -222,8 +223,9 @@ export default function Pitch({
           onSelectPlayer={onSelectPlayer}
         />
       </div>
-      <div className="pitch-banner pitch-banner--home">
-        {home.logo && <img src={home.logo} alt="" className="pitch-logo" />}
+      </div>
+      <div className="pitch-side-tag pitch-side-tag--home">
+        {home.logo ? <img src={home.logo} alt="" /> : null}
         <span>{home.name}</span>
       </div>
     </div>
