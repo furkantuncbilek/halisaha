@@ -7,17 +7,25 @@ export default function Pitch({
   players,
   matches,
   readOnly,
+  selectedId,
   onAssign,
   onClear,
-  draggingId,
-  onDragStartPlayer,
+  onSelectPlayer,
 }) {
   const formation = FORMATIONS[formationKey]
   const byId = Object.fromEntries(players.map((p) => [p.id, p]))
 
+  const placeOnSlot = (slotId) => {
+    if (readOnly) return
+    if (selectedId) {
+      onAssign(slotId, selectedId)
+      return
+    }
+  }
+
   const handleDrop = (e, slotId) => {
     e.preventDefault()
-    const playerId = e.dataTransfer.getData('text/player-id') || draggingId
+    const playerId = e.dataTransfer.getData('text/player-id') || selectedId
     if (playerId && !readOnly) onAssign(slotId, playerId)
   }
 
@@ -40,26 +48,44 @@ export default function Pitch({
           const playerId = lineup[pos.id]
           const player = playerId ? byId[playerId] : null
           const avg = player ? getPlayerAvg(player.id, matches) : null
+          const isTarget = !player && !!selectedId
 
           return (
             <div
               key={pos.id}
-              className={`slot ${player ? 'slot--filled' : 'slot--empty'}`}
+              className={`slot ${player ? 'slot--filled' : 'slot--empty'} ${isTarget ? 'slot--target' : ''}`}
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, pos.id)}
+              onClick={() => {
+                if (!player) placeOnSlot(pos.id)
+              }}
             >
               {player ? (
                 <button
                   type="button"
-                  className="token"
+                  className={`token ${selectedId === player.id ? 'token--selected' : ''}`}
                   draggable={!readOnly}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('text/player-id', player.id)
-                    onDragStartPlayer?.(player.id)
+                    onSelectPlayer?.(player.id)
                   }}
-                  onClick={() => !readOnly && onClear(pos.id)}
-                  title={readOnly ? player.name : `${player.name} — kaldırmak için dokun`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (readOnly) return
+                    if (selectedId && selectedId !== player.id) {
+                      onAssign(pos.id, selectedId)
+                      return
+                    }
+                    onClear(pos.id)
+                  }}
+                  title={
+                    readOnly
+                      ? player.name
+                      : selectedId
+                        ? 'Seçili oyuncuyu buraya koy'
+                        : `${player.name} — kaldırmak için dokun`
+                  }
                 >
                   <span className="token-ring" style={{ borderColor: ratingColor(avg) }} />
                   <span className="token-avg" style={{ color: ratingColor(avg) }}>
@@ -71,7 +97,9 @@ export default function Pitch({
               ) : (
                 <div className="slot-empty">
                   <span className="slot-role">{pos.role}</span>
-                  <span className="slot-hint">{readOnly ? 'Boş' : 'Bırak'}</span>
+                  <span className="slot-hint">
+                    {readOnly ? 'Boş' : selectedId ? 'Koy' : 'Boş'}
+                  </span>
                 </div>
               )}
             </div>

@@ -7,9 +7,10 @@ export default function PlayerPanel({
   bench,
   matches,
   readOnly,
+  selectedId,
   onAdd,
   onRemove,
-  onDragStartPlayer,
+  onSelectPlayer,
 }) {
   const [name, setName] = useState('')
 
@@ -45,26 +46,39 @@ export default function PlayerPanel({
 
       <div className="player-list">
         {players.length === 0 && (
-          <p className="muted">Henüz oyuncu yok. İsim ekleyip sahaya sürükle.</p>
+          <p className="muted">Henüz oyuncu yok. İsim ekle, sonra sahaya yerleştir.</p>
         )}
         {players.map((p) => {
           const avg = getPlayerAvg(p.id, matches)
           const isBench = bench.some((b) => b.id === p.id)
+          const selected = selectedId === p.id
           return (
             <div
               key={p.id}
-              className={`player-row ${isBench ? '' : 'player-row--on'}`}
+              className={`player-row ${isBench ? '' : 'player-row--on'} ${selected ? 'player-row--selected' : ''}`}
               draggable={!readOnly}
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/player-id', p.id)
-                onDragStartPlayer?.(p.id)
+                onSelectPlayer?.(p.id)
+              }}
+              onClick={() => {
+                if (readOnly) return
+                onSelectPlayer?.(selected ? null : p.id)
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  if (!readOnly) onSelectPlayer?.(selected ? null : p.id)
+                }
               }}
             >
               <div className="player-row-main">
                 <span className="player-dot" style={{ background: ratingColor(avg) }} />
                 <div>
                   <strong>{p.name}</strong>
-                  <small>{isBench ? 'Yedek' : 'Sahada'}</small>
+                  <small>{selected ? 'Seçili — pozisyona dokun' : isBench ? 'Yedek' : 'Sahada'}</small>
                 </div>
               </div>
               <div className="player-row-meta">
@@ -76,7 +90,10 @@ export default function PlayerPanel({
                     type="button"
                     className="btn-icon"
                     aria-label="Sil"
-                    onClick={() => onRemove(p.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRemove(p.id)
+                    }}
                   >
                     ×
                   </button>

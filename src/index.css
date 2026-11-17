@@ -616,6 +616,21 @@ button {
   background: var(--lime-dim);
 }
 
+.player-row--selected {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 1px var(--lime);
+}
+
+.slot--target .slot-empty {
+  border-color: var(--lime);
+  background: rgba(184, 245, 58, 0.18);
+  animation: pulse-mark 1.4s ease-in-out infinite;
+}
+
+.token--selected .token-ring {
+  box-shadow: 0 0 0 3px rgba(184, 245, 58, 0.45), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
 .player-row-main {
   display: flex;
   align-items: center;

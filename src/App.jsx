@@ -17,7 +17,14 @@ export default function App() {
   const squad = useSquad()
   const { state, bench, shareUrl } = squad
   const [tab, setTab] = useState('pitch')
-  const [draggingId, setDraggingId] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
+
+  const selectedName = state.players.find((p) => p.id === selectedId)?.name
+
+  const handleAssign = (slotId, playerId) => {
+    squad.assignSlot(slotId, playerId)
+    setSelectedId(null)
+  }
 
   return (
     <div className="app">
@@ -86,7 +93,11 @@ export default function App() {
                     ))}
                   </select>
                 </label>
-                <p className="hint">Oyuncuyu sürükle-bırak. Sahadakine dokununca çıkar.</p>
+                <p className="hint">
+                  {selectedName
+                    ? `${selectedName} seçili — sahada bir pozisyona dokun.`
+                    : 'Oyuncuya dokun/sürükle, sonra pozisyona bırak.'}
+                </p>
               </div>
 
               <Pitch
@@ -95,10 +106,10 @@ export default function App() {
                 players={state.players}
                 matches={state.matches}
                 readOnly={state.readOnly}
-                draggingId={draggingId}
-                onAssign={squad.assignSlot}
+                selectedId={selectedId}
+                onAssign={handleAssign}
                 onClear={squad.clearSlot}
-                onDragStartPlayer={setDraggingId}
+                onSelectPlayer={setSelectedId}
               />
             </div>
 
@@ -107,9 +118,10 @@ export default function App() {
               bench={bench}
               matches={state.matches}
               readOnly={state.readOnly}
+              selectedId={selectedId}
               onAdd={squad.addPlayer}
               onRemove={squad.removePlayer}
-              onDragStartPlayer={setDraggingId}
+              onSelectPlayer={setSelectedId}
             />
           </div>
         )}
