@@ -1,63 +1,63 @@
-/** Formasyonlar — y: kendi kalesinden ortaya (0–100), x: sol–sağ */
+/** Formasyonlar — y: kendi kalesinden hücuma (0=kale, 100=orta saha civarı) */
 export const FORMATIONS = {
   '5v5-2-1-1': {
     label: '5v5 · 2-1-1',
     slots: 5,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 8 },
-      { id: 'dl', role: 'DS', x: 28, y: 38 },
-      { id: 'dr', role: 'DS', x: 72, y: 38 },
+      { id: 'gk', role: 'KL', x: 50, y: 4 },
+      { id: 'dl', role: 'DS', x: 28, y: 32 },
+      { id: 'dr', role: 'DS', x: 72, y: 32 },
       { id: 'cm', role: 'OS', x: 50, y: 62 },
-      { id: 'st', role: 'FV', x: 50, y: 88 },
+      { id: 'st', role: 'FV', x: 50, y: 94 },
     ],
   },
   '5v5-1-2-1': {
     label: '5v5 · 1-2-1',
     slots: 5,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 8 },
-      { id: 'cb', role: 'STP', x: 50, y: 38 },
-      { id: 'ml', role: 'OS', x: 28, y: 62 },
-      { id: 'mr', role: 'OS', x: 72, y: 62 },
-      { id: 'st', role: 'FV', x: 50, y: 88 },
+      { id: 'gk', role: 'KL', x: 50, y: 4 },
+      { id: 'cb', role: 'STP', x: 50, y: 32 },
+      { id: 'ml', role: 'OS', x: 28, y: 64 },
+      { id: 'mr', role: 'OS', x: 72, y: 64 },
+      { id: 'st', role: 'FV', x: 50, y: 94 },
     ],
   },
   '6v6-2-2-1': {
     label: '6v6 · 2-2-1',
     slots: 6,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 6 },
-      { id: 'dl', role: 'DS', x: 28, y: 32 },
-      { id: 'dr', role: 'DS', x: 72, y: 32 },
+      { id: 'gk', role: 'KL', x: 50, y: 3 },
+      { id: 'dl', role: 'DS', x: 28, y: 28 },
+      { id: 'dr', role: 'DS', x: 72, y: 28 },
       { id: 'ml', role: 'OS', x: 32, y: 58 },
       { id: 'mr', role: 'OS', x: 68, y: 58 },
-      { id: 'st', role: 'FV', x: 50, y: 88 },
+      { id: 'st', role: 'FV', x: 50, y: 94 },
     ],
   },
   '7v7-2-3-1': {
     label: '7v7 · 2-3-1',
     slots: 7,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 5 },
-      { id: 'dl', role: 'DS', x: 30, y: 30 },
-      { id: 'dr', role: 'DS', x: 70, y: 30 },
-      { id: 'ml', role: 'OS', x: 22, y: 58 },
-      { id: 'mc', role: 'OS', x: 50, y: 55 },
-      { id: 'mr', role: 'OS', x: 78, y: 58 },
-      { id: 'st', role: 'FV', x: 50, y: 88 },
+      { id: 'gk', role: 'KL', x: 50, y: 3 },
+      { id: 'dl', role: 'DS', x: 30, y: 26 },
+      { id: 'dr', role: 'DS', x: 70, y: 26 },
+      { id: 'ml', role: 'OS', x: 22, y: 56 },
+      { id: 'mc', role: 'OS', x: 50, y: 54 },
+      { id: 'mr', role: 'OS', x: 78, y: 56 },
+      { id: 'st', role: 'FV', x: 50, y: 94 },
     ],
   },
   '7v7-3-2-1': {
     label: '7v7 · 3-2-1',
     slots: 7,
     positions: [
-      { id: 'gk', role: 'KL', x: 50, y: 5 },
-      { id: 'dl', role: 'DS', x: 22, y: 30 },
-      { id: 'dc', role: 'STP', x: 50, y: 28 },
-      { id: 'dr', role: 'DS', x: 78, y: 30 },
+      { id: 'gk', role: 'KL', x: 50, y: 3 },
+      { id: 'dl', role: 'DS', x: 22, y: 26 },
+      { id: 'dc', role: 'STP', x: 50, y: 24 },
+      { id: 'dr', role: 'DS', x: 78, y: 26 },
       { id: 'ml', role: 'OS', x: 35, y: 58 },
       { id: 'mr', role: 'OS', x: 65, y: 58 },
-      { id: 'st', role: 'FV', x: 50, y: 88 },
+      { id: 'st', role: 'FV', x: 50, y: 94 },
     ],
   },
 }
@@ -74,13 +74,16 @@ export function createEmptyLineup(formationKey) {
   return lineup
 }
 
-/** Ev sahibi: alt yarı. Deplasman: üst yarı (ayna). */
+/**
+ * Ev (alt kale): KL en altta, FV orta sahaya yakın.
+ * Deplasman (üst kale): KL en üstte, FV orta sahaya yakın.
+ */
 export function mapPitchPosition(pos, side) {
-  const half = pos.y * 0.46
+  const depth = pos.y * 0.46
   if (side === 'home') {
-    return { x: pos.x, y: 52 + half }
+    return { x: pos.x, y: 98 - depth }
   }
-  return { x: 100 - pos.x, y: 48 - half }
+  return { x: 100 - pos.x, y: 2 + depth }
 }
 
 export function normalizeSlot(lineupSlot, formationPos, side) {
@@ -96,6 +99,19 @@ export function getSlotPlayerId(lineupSlot) {
   if (!lineupSlot) return null
   if (typeof lineupSlot === 'string') return lineupSlot
   return lineupSlot.playerId || null
+}
+
+/** Dizilişteki oyuncuları formasyon varsayılanına yeniden oturt */
+export function realignLineup(lineup, formationKey, side) {
+  const formation = FORMATIONS[formationKey] || FORMATIONS[DEFAULT_FORMATIONATION]
+  const next = createEmptyLineup(formationKey)
+  formation.positions.forEach((pos) => {
+    const playerId = getSlotPlayerId(lineup?.[pos.id])
+    if (!playerId) return
+    const mapped = mapPitchPosition(pos, side)
+    next[pos.id] = { playerId, x: mapped.x, y: mapped.y }
+  })
+  return next
 }
 
 export function createTeam(name, formation = DEFAULT_FORMATIONATION) {

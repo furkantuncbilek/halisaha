@@ -1,28 +1,59 @@
 import LZString from 'lz-string'
-import { DEFAULT_FORMATIONATION, createEmptyLineup, createTeam } from './formations'
+import {
+  DEFAULT_FORMATIONATION,
+  createEmptyLineup,
+  createTeam,
+  realignLineup,
+} from './formations'
 
-const STORAGE_KEY = 'saha-squad-v2'
-const LEGACY_KEY = 'saha-squad-v1'
+const STORAGE_KEY = 'saha-squad-v3'
+const LEGACY_KEYS = ['saha-squad-v2', 'saha-squad-v1']
 
 export function defaultState() {
   return {
-    home: createTeam('Ev Sahibi'),
+    home: createTeam('Ev'),
     away: createTeam('Deplasman'),
     matches: [],
   }
 }
 
+function fixTeam(team, side, fallbackName) {
+  const formation = team?.formation || DEFAULT_FORMATIONATION
+  const name =
+    !team?.name || team.name === 'Ev Sahibi' || team.name === 'Ekibimiz'
+      ? fallbackName
+      : team.name
+  return {
+    logo: team?.logo ?? null,
+    ...team,
+    name,
+    formation,
+    players: team?.players || [],
+    lineup: realignLineup(team?.lineup, formation, side),
+  }
+}
+
 function migrateLegacy(legacy) {
   if (!legacy) return null
-  if (legacy.home && legacy.away) return legacy
+  if (legacy.home && legacy.away) {
+    return {
+      home: fixTeam(legacy.home, 'home', 'Ev'),
+      away: fixTeam(legacy.away, 'away', 'Deplasman'),
+      matches: legacy.matches || [],
+    }
+  }
   if (!legacy.players && !legacy.teamName) return null
   return {
-    home: {
-      name: legacy.teamName || 'Ev Sahibi',
-      formation: legacy.formation || DEFAULT_FORMATIONATION,
-      players: legacy.players || [],
-      lineup: legacy.lineup || createEmptyLineup(legacy.formation || DEFAULT_FORMATIONATION),
-    },
+    home: fixTeam(
+      {
+        name: legacy.teamName || 'Ev',
+        formation: legacy.formation || DEFAULT_FORMATIONATION,
+        players: legacy.players || [],
+        lineup: legacy.lineup || createEmptyLineup(legacy.formation || DEFAULT_FORMATIONATION),
+      },
+      'home',
+      'Ev'
+    ),
     away: createTeam('Deplasman', legacy.formation || DEFAULT_FORMATIONATION),
     matches: legacy.matches || [],
   }
@@ -35,8 +66,10 @@ export function loadState() {
       const parsed = JSON.parse(raw)
       return migrateLegacy(parsed) || parsed
     }
-    const legacy = localStorage.getItem(LEGACY_KEY)
-    if (legacy) return migrateLegacy(JSON.parse(legacy))
+    for (const key of LEGACY_KEYS) {
+      const legacy = localStorage.getItem(key)
+      if (legacy) return migrateLegacy(JSON.parse(legacy))
+    }
     return null
   } catch {
     return null
