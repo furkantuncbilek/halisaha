@@ -382,46 +382,6 @@ button {
 }
 
 /* Pitch */
-.pitch-shell {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.pitch-side-tag {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.5rem;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.pitch-side-tag span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 80%;
-}
-
-.pitch-side-tag img {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.pitch-side-tag--away {
-  color: #5ec8ff;
-}
-
-.pitch-side-tag--home {
-  color: var(--lime);
-}
-
 .pitch-wrap {
   position: relative;
   border-radius: 22px;

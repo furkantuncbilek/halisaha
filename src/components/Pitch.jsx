@@ -168,17 +168,12 @@ export default function Pitch({
   const [dragPos, setDragPos] = useState(null)
 
   return (
-    <div className="pitch-shell" id="saha-pitch-card">
-      <div className="pitch-side-tag pitch-side-tag--away">
-        {away.logo ? <img src={away.logo} alt="" /> : null}
-        <span>{away.name}</span>
-      </div>
-      <div className="pitch-wrap">
+    <div className="pitch-wrap" id="saha-pitch-card">
       <div
         className="pitch"
         ref={pitchRef}
         role="img"
-        aria-label="İki takımlı halı saha dizilişi"
+        aria-label={`${home.name} vs ${away.name}`}
       >
         <div className="pitch-grass" />
         <div className="pitch-markings">
@@ -222,11 +217,6 @@ export default function Pitch({
           onMove={onMove}
           onSelectPlayer={onSelectPlayer}
         />
-      </div>
-      </div>
-      <div className="pitch-side-tag pitch-side-tag--home">
-        {home.logo ? <img src={home.logo} alt="" /> : null}
-        <span>{home.name}</span>
       </div>
     </div>
   )

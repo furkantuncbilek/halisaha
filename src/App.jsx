@@ -92,7 +92,7 @@ export default function App() {
               <p className="hint hint-center">
                 {selectedName
                   ? `${selectedName} seçili — boş pozisyona dokun veya sahada sürükle.`
-                  : 'Oyuncuyu pozisyona koy, sonra sahada sürükleyerek yerini ayarla.'}
+                  : 'Üst: Deplasman (mavi) · Alt: Ev (yeşil). Oyuncuyu koy, sürükleyerek ayarla.'}
               </p>
 
               <Pitch
