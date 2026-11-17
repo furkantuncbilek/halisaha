@@ -75,15 +75,16 @@ export function createEmptyLineup(formationKey) {
 }
 
 /**
- * Ev (alt kale): KL en altta, FV orta sahaya yakın.
- * Deplasman (üst kale): KL en üstte, FV orta sahaya yakın.
+ * Ev (alt): KL ~84, FV ~52. Deplasman (üst): KL ~16, FV ~48.
+ * Token translate(-50%) ile taştığı için kenardan en az ~14% pay bırakılır;
+ * böylece takım isim bandının üstüne binmez.
  */
 export function mapPitchPosition(pos, side) {
-  const depth = pos.y * 0.46
+  const depth = pos.y * 0.34
   if (side === 'home') {
-    return { x: pos.x, y: 98 - depth }
+    return { x: pos.x, y: 86 - depth }
   }
-  return { x: 100 - pos.x, y: 2 + depth }
+  return { x: 100 - pos.x, y: 14 + depth }
 }
 
 export function normalizeSlot(lineupSlot, formationPos, side) {

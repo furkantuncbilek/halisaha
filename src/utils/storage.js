@@ -6,8 +6,8 @@ import {
   realignLineup,
 } from './formations'
 
-const STORAGE_KEY = 'saha-squad-v3'
-const LEGACY_KEYS = ['saha-squad-v2', 'saha-squad-v1']
+const STORAGE_KEY = 'saha-squad-v4'
+const LEGACY_KEYS = ['saha-squad-v3', 'saha-squad-v2', 'saha-squad-v1']
 
 export function defaultState() {
   return {
